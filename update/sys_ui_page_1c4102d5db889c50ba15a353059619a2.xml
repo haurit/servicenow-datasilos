@@ -84,8 +84,10 @@
 	<ol>
 		<li>Install the DataSilos application. If you see this installation guide within the ServiceNow instance, you did this already. You can fork this&#160;<a href="https://github.com/saschawildgrube/servicenow-datasilos" target="_blank">repository</a>&#160;and then import the application from source control.</li>
 		<li>Install the DevTools application. You can fork this&#160;<a href="https://github.com/saschawildgrube/servicenow-devtools" target="_blank">repository</a>&#160;and then import the application from source control.</li>
-		<li>Go to "Access Control (ACL)" and check if there are any ACLs in the "DataSilos" application scope that refer to OOTB tables (e.g. incident, incident_task, etc.). If you see some, they must be deleted. A platform bug eventually creates them during installation and associates them to the app scope. Note that they cannot be deleted directly, because the platform denies any change to an ACL that refers to a table in the global scope from within an application scope. Use the following trick: Change the table to "Data Silos" then "Save" and then "Delete" them.</li>
+		<li>Check the DevTools version. If a different (more recent) version of DevTools was imported from source control you might consider creating a branch based on the corresponding version tag and switch to that branch.</li>
+		<li>Follow the installation instruction contained in DevTools/Start.</li>
 		<li>Elevate roles to security_admin</li>
+		<li>Go to "Access Control (ACL)" and check if there are any ACLs in the "DataSilos" application scope that refer to OOTB tables (e.g. incident, incident_task, etc.). If you see some, they must be deleted. A platform bug eventually creates them during installation and associates them to the app scope. Note that they cannot be deleted directly, because the platform denies any change to an ACL that refers to a table in the global scope from within an application scope. Use the following trick: Change the table to "Data Silos" then "Save" and then "Delete" them.</li>
 		<li>Switch to global scope</li>
 		<li>For each of the following tables peform the steps listed below:</li>
 		<pre>
@@ -138,6 +140,14 @@ x_snc_datasilos.ExecuteACL(current)
 		<li>Go to "Test Suite" and execute all tests.</li>
 		<li>Activate the "Maintenance" scheduled script</li>
 	</ol>
+	<h3>Rollback</h3>
+	<p>In case anything goes terribly wrong after activation, follow these steps:</p>
+	<ol>
+		<li>Activate ATF testing and run all tests (in production!) to verify that the installation and functionality works from the perspective of the DataSilos application.</li>
+		<li>Go to the "Options" module and DEACTIVATE the DataSilos application.</li>
+		<li>If this does not resolve the issue, deactivate all "DataSilos" business rules and UNDO all changes done to ACLs.</li>
+		<li>If this still does not resolve issues - the root cause is probably somewhere else. However, at this point you can just remove the DataSilos application as a whole.</li>
+	</ol>
 	
 	<h2>FAQ</h2>
 	<h3>What happens if a user is not associated to any group?</h3>
@@ -172,6 +182,7 @@ Requires role: x_snc_datasilos.manager
 		<li>Extend the GetAllSupportedRelatedClassNames script include to support the tables of related records (e.g. tasks).</li>
 		<li>Extend the GetParentRecord script include to support the identification of parent records of related records (e.g. to get the incident from an incident task)</li>
 		<li>Extend the GetRelatedRecords script include to support the identification of related records of a main record (e.g. to get the incident_tasks from an incident)</li>
+		<li>Extend the PrepareQuery, RecordInitialize and RecordUpdate scripts to consider specific requirements for the new tables. Keep in mind that any table that is NOT based on the task table may not have the assignment_group field and hence might require a completely different way to populate the whitelist.</li>
 		<li>Extend the filter condition in the "ACLs" module to cover the new tables</li>
 		<li>Update ATF test "DataSilos - Installation" to check for business rules related to the new tables</li>
 		<li>Update ATF test "DataSilos - Installation" to check for ACLs related to the new tables</li>
@@ -190,6 +201,14 @@ DataSilos - incident_task - cross-silo
 		<li>Update THIS documentation</li>
 	</ol>
 	<h2>Release Notes</h2>
+	<h3>1.2.2 - 2020-07-15</h3>
+	<ol>
+		<li>The Maintenance script now explicitly checks the related tables, too. So *task records which are not associated to other whitelisted records are now whitelisted based on their assignment groups.</li>
+		<li>Improved logging in the Maintenance script: Only the start and the end of the execution (with a consolidated summary) is logged.</li> 
+		<li>Extended the developer guide with more details.</li>
+		<li>Added the "Rollback" section to the implementation guide.</li>
+		<li>Added a navigation module to show all silo to group associations.</li>
+	</ol>
 	<h3>1.2.1 - 2020-07-08</h3>
 	<ol>
 		<li>Users can now access request items where the associated request is opened on their behalf.</li>
@@ -222,7 +241,7 @@ DataSilos - incident_task - cross-silo
 		<li>Updated documentation: What happens if a user does not have any roles?</li>
 	</ol>
 	<h3>1.0.0 - 2020-06-23</h3>
-	<p>First baselined version</p>
+	<p>First baselined version with support for incidents and change requests.</p>
 </div>
 </j:jelly>]]></html>
         <name>Start</name>
@@ -231,13 +250,13 @@ DataSilos - incident_task - cross-silo
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2020-04-07 13:52:45</sys_created_on>
         <sys_id>1c4102d5db889c50ba15a353059619a2</sys_id>
-        <sys_mod_count>122</sys_mod_count>
+        <sys_mod_count>131</sys_mod_count>
         <sys_name>Start</sys_name>
         <sys_package display_value="DataSilos" source="x_snc_datasilos">dafbffebdbb78450ba15a353059619eb</sys_package>
         <sys_policy/>
         <sys_scope display_value="DataSilos">dafbffebdbb78450ba15a353059619eb</sys_scope>
         <sys_update_name>sys_ui_page_1c4102d5db889c50ba15a353059619a2</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2020-07-08 15:04:53</sys_updated_on>
+        <sys_updated_on>2020-07-15 08:47:40</sys_updated_on>
     </sys_ui_page>
 </record_update>
