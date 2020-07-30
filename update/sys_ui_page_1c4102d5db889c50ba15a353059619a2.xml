@@ -44,7 +44,7 @@
 	<h2>System Requirements</h2>
 	<ul>
 		<li>Madrid or later</li>
-		<li><a href="https://github.com/saschawildgrube/servicenow-devtools/" target="_blank">DevTools 1.2.0 or later</a></li>
+		<li><a href="https://github.com/saschawildgrube/servicenow-devtools/" target="_blank">DevTools 1.2.1 or later</a></li>
 	</ul>
 	
 	<h2>Requirement analysis</h2>
@@ -129,6 +129,7 @@ x_snc_datasilos.ExecuteACL(current)
 			Note that you may have to combine the script logic with already existing scripts.
 		</ol>
 		<li>Install any additional customer specific applications that are based on DataSilos and extend its functionality.</li>
+		<li>If possible activate the DataSilos app in the options and then go to "Test Suite" and execute all tests. Fix any issues reported by the tests. If needed deactivate the DataSilos app after running all tests.</li>
 	</ol>
 	<h3>Configuration</h3>
 	<ol>
@@ -136,14 +137,15 @@ x_snc_datasilos.ExecuteACL(current)
 		<li>As a data silos manager go to the "Data Silos" module and configure all data silos. Add the corresponding groups to each data silo. Groups associated to a data silo are either&#160;<b>Member</b>,&#160;<b>Fulfiller</b>&#160;or&#160;<b>Supervisor</b>&#160;groups. This can also be done automatically or via data import.</li>
 		<li>Assign the x_snc_datasilos.sentinel role to technical users where applicable. They will not be affected by any filtering.</li>
 		<li>Assign the x_snc_datasilos.sentinel role to users who are tasked to create reports and hence must access all data where applicable.</li>
+		<li>Configure additional fields for tables that should be used to populate the whitelist.</li>
+		<li>Go to "Scheduled Jobs" and define the frequency in which the "Maintenance" scheduled script should run. Experience shows that the script can process approx. 1000 records per minute - so plan your roll-out procedure accordingly.</li>
 	</ol>
 	<h3>Activation</h3>
 	<ol>
 		<li>Go to the "Options" module and activate the DataSilos application.</li>
-		<li>Configure additional fields for tables that should be used to populate the whitelist.</li>
 		<li>Deactivate any existing conflicting business rules that may have been identified earlier.</li>
 		<li>Go to "Test Suite" and execute all tests.</li>
-		<li>Activate the "Maintenance" scheduled script</li>
+		<li>Go to "Scheduled Jobs" and activate the "Maintenance" scheduled script</li>
 	</ol>
 	<h3>Rollback</h3>
 	<p>In case anything goes terribly wrong after activation, follow these steps:</p>
@@ -208,9 +210,18 @@ DataSilos - incident_task - cross-silo
 		<li>Update THIS documentation</li>
 	</ol>
 	<h2>Release Notes</h2>
+	<h3>1.4.0 - 2020-TODO</h3>
+	<ol>
+		<li>DevTools version must be 1.2.1 or higher.</li>
+		<li>Introduced the Global Visibility flag for the incident table. If set to true, everyone can see this particular record.</li>
+		<li>Reactivated the "Log" module.</li>
+		<li>The module "Maintenance" has been replaced by the "Scheduled Jobs" module and shows all scheduled script executions where the name contains "DataSilos".</li>
+		<li>The module "Business rules" now shows all business rules that contain "DataSilos" in their name - this is to consider customer's naming conventions with prefixes.</li>
+		<li>A bug in the Madrid release caused issues in some navigation modules preventing pre-defined filters to work properly. This has been fixed.</li>
+	</ol>
 	<h3>1.3.0 - 2020-07-16</h3>
 	<ol>
-		<li>Introduced the configurable whitelist_trigger_field option. By setting the table specific option (e.g. x_snc_datasilos.incident.whitelist_trigger_field) the fields that should be used to populate the whitelist can be explicitly configured. For each table based on the task table this is the assignment_group field. However any other field that contains a reference to a group can be used. Dot-walking is NOT yet supported, though.</li> 
+		<li>Introduced the configurable whitelist_trigger_field option. By setting the table specific option (e.g. x_snc_datasilos.incident.whitelist_trigger_field) the fields that should be used to populate the whitelist can be explicitly configured. If the option is empty the default for each table based on the task table is the assignment_group field. However any other field that contains a reference to a group can be used. Dot-walking is NOT yet supported, though.</li> 
 		<li>Introduced the maintenance.log_frequency option to control how often the maintenance script should log the current progress.</li>
 		<li>Deactivated the Log module for the time being.</li>
 	</ol>
@@ -263,13 +274,13 @@ DataSilos - incident_task - cross-silo
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2020-04-07 13:52:45</sys_created_on>
         <sys_id>1c4102d5db889c50ba15a353059619a2</sys_id>
-        <sys_mod_count>143</sys_mod_count>
+        <sys_mod_count>150</sys_mod_count>
         <sys_name>Start</sys_name>
         <sys_package display_value="DataSilos" source="x_snc_datasilos">dafbffebdbb78450ba15a353059619eb</sys_package>
         <sys_policy/>
         <sys_scope display_value="DataSilos">dafbffebdbb78450ba15a353059619eb</sys_scope>
         <sys_update_name>sys_ui_page_1c4102d5db889c50ba15a353059619a2</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2020-07-16 17:13:00</sys_updated_on>
+        <sys_updated_on>2020-07-30 10:16:09</sys_updated_on>
     </sys_ui_page>
 </record_update>
