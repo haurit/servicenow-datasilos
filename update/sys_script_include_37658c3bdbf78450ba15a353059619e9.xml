@@ -5,31 +5,30 @@
         <api_name>x_snc_datasilos.ExecuteBusinessRule</api_name>
         <caller_access/>
         <client_callable>false</client_callable>
-        <description/>
+        <description>This functions serves as the main entry point to the DataSilos application and should be called from the script block of a business rule which responds to insert, update and query operations.</description>
         <name>ExecuteBusinessRule</name>
         <script><![CDATA[function ExecuteBusinessRule(current, previous)
 {
-	var strClassName = current.getRecordClassName(); 
-	var strOperation = '';
+	var GetStringValue = x_snc_devtools.GetStringValue;
+	var GetBoolValue = x_snc_devtools.GetBoolValue;
+	
 	
 	function Log(strText)
 	{
-		var Debug = x_snc_devtools.Debug;
-		Debug('DataSilos: ExecuteBusinessRule: '+strClassName+': '+strOperation+': '+gs.getUserName()+': '+strText);
+		x_snc_datasilos.Log('ExecuteBusinessRule: '+strTable+': '+strOperation+': '+strText);
 	}
-	
-	function IsActive(strClassName)
+	function Debug(strText)
 	{
-		var bActive = gs.getProperty('x_snc_datasilos.active');
-		if (bActive == false)
-			return false;
-		if (IsClassNameSupported(strClassName))
+		x_snc_datasilos.Debug('ExecuteBusinessRule: '+strTable+': '+strOperation+': '+strText);
+	}
+	function IsActiveTable(strTable)
+	{
+		if (IsTableSupported(strTable))
 			return true;
-		if (strClassName == 'sysapproval_approver')
+		if (strTable == 'sysapproval_approver')
 			return true;
 		return false;
 	}
-	
 	function GetOperation(current)
 	{
 		var strOperation = '';
@@ -48,53 +47,84 @@
 		return strOperation;
 	}
 
-	if (IsActive(strClassName) == false)
+	var strTable = current.getRecordClassName(); 
+	
+	if (IsActiveTable(strTable) == false)
 	{
 		return;
 	}
-
-	strOperation = GetOperation(current);
+	
+	var strOperation = GetOperation(current);
 	
 	if (strOperation == 'query')
 	{
+		if (IsActive() == false)
+		{
+			return;
+		}
+				
 		if (gs.hasRole('admin') == true)
 		{
-			//Log('User has the admin role. Filters are not applied.');
+			Debug('User has the admin role. Filters are not applied.');
 			return;
 		}		
 		if (IsUserSentinel() == true)
 		{
-			//Log('User has the sentinel role. Filters are not applied.');
+			Debug('User has the sentinel role. Filters are not applied.');
 			return;
 		}
 		
-		if (strClassName == 'sysapproval_approver')
+		if (strTable == 'sysapproval_approver')
 		{
 			return;
 		}
 		
+		
+		var bAvoidExpensiveQueries = GetBoolValue(GetConfigValue('tables',strTable,'avoid_expensive_queries'));
+		if (bAvoidExpensiveQueries == true)
+		{
+			var strEncodedQuery = GetStringValue(current.getEncodedQuery());
+
+			if (strEncodedQuery.startsWith('sys_id=') || strEncodedQuery.includes('active=true'))
+			{
+				PrepareQuery(current);
+				Debug('Query updated: '+current.getEncodedQuery());
+			}
+			else
+			{
+				Debug('Query does not start with sys_id= NOR contains active=true so no filtering takes place: '+current.getEncodedQuery());
+			}
+			return;
+		}
+		
 		PrepareQuery(current);
-		//Log('Query updated: '+current.getEncodedQuery());
+		Debug('Query updated: '+current.getEncodedQuery());
 		return;
 	}
 	
 	if (IsUserGhost() == true)
 	{
-		Log('User has the x_snc_datasilos.ghost role. No changes are made during insert or update.');
+		Debug('User has the x_snc_datasilos.ghost role. No changes are made during insert or update.');
 		return;
 	}
-
+	
+	if (current.x_snc_datasilos_ghost == true)
+	{
+		Debug('The record is flagged as a ghost. No changes are made during insert or update.');
+		return;
+	}
+		
 	if (strOperation == 'insert')
 	{
 		RecordInitialize(current);
-		Log('Record initialized');
+		Debug('Record initialized');
 		return;
 	}
 
 	if (strOperation == 'update')
 	{
 		RecordUpdate(current);
-		Log('Record updated');
+		Debug('Record updated');
 		return;
 	}
 	
@@ -103,13 +133,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2020-04-02 12:55:57</sys_created_on>
         <sys_id>37658c3bdbf78450ba15a353059619e9</sys_id>
-        <sys_mod_count>95</sys_mod_count>
+        <sys_mod_count>111</sys_mod_count>
         <sys_name>ExecuteBusinessRule</sys_name>
         <sys_package display_value="DataSilos WORK IN PROGRESS" source="x_snc_datasilos">dafbffebdbb78450ba15a353059619eb</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DataSilos WORK IN PROGRESS">dafbffebdbb78450ba15a353059619eb</sys_scope>
         <sys_update_name>sys_script_include_37658c3bdbf78450ba15a353059619e9</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2020-07-05 18:03:09</sys_updated_on>
+        <sys_updated_on>2020-10-02 12:40:54</sys_updated_on>
     </sys_script_include>
 </record_update>

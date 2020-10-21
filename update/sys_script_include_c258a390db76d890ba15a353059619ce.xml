@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_snc_datasilos.GetConfigBaseline</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>GetConfigBaseline</name>
+        <script><![CDATA[function GetConfigBaseline()
+{
+	var config =
+	{
+		'active': true,
+		'group_filter': '',
+		'tables':
+		{
+			'incident':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by,caller_id'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			},
+			'incident_task':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			},
+			'problem':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			},
+			'problem_task':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			},
+			'change_request':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by,requested_by'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			},
+			'change_task':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			},
+			'sc_request':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by,requested_for'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			},
+			'sc_req_item':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by,request.requested_for'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			},
+			'sc_task':
+			{
+				'active': true,
+				'avoid_expensive_queries': false,
+				'columns':
+				{
+					'instant_access':
+					{
+						'sys_user': 'opened_by'
+					},
+					'whitelist_trigger':
+					{
+						'sys_user_group': 'assignment_group'
+					}
+				}
+			}	
+		}
+	};
+	
+
+	return config;
+}]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2020-08-19 11:36:47</sys_created_on>
+        <sys_id>c258a390db76d890ba15a353059619ce</sys_id>
+        <sys_mod_count>9</sys_mod_count>
+        <sys_name>GetConfigBaseline</sys_name>
+        <sys_package display_value="DataSilos WORK IN PROGRESS" source="x_snc_datasilos">dafbffebdbb78450ba15a353059619eb</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DataSilos WORK IN PROGRESS">dafbffebdbb78450ba15a353059619eb</sys_scope>
+        <sys_update_name>sys_script_include_c258a390db76d890ba15a353059619ce</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2020-09-07 10:59:42</sys_updated_on>
+    </sys_script_include>
+</record_update>

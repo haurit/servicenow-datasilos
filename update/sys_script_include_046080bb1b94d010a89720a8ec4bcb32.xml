@@ -1,54 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
     <sys_script_include action="INSERT_OR_UPDATE">
-        <access>package_private</access>
+        <access>public</access>
         <active>true</active>
         <api_name>x_snc_datasilos.PrepareQuery</api_name>
         <caller_access/>
         <client_callable>false</client_callable>
-        <description/>
+        <description>The PrepareQuery function is the heart of the DataSilos application. It takes a GlideRecord object and adds all filter criteria that apply t the current user when trying to access records in the given table. It is used by all entry point functions. However it does not check for the roles of the current user - which means it can also be used to check if a record would be visible to a user even if the user has the sentinel or admin role.</description>
         <name>PrepareQuery</name>
         <script><![CDATA[function PrepareQuery(record)
 {
-	var GetGroupsFromUser = x_snc_devtools.GetGroupsFromUser;
+	var GetValue = x_snc_devtools.GetValue;
+	var GetArrayValue = x_snc_devtools.GetArrayValue;
 
 	var strUserSysId = gs.getUser().getID();
-	var strRecordClassName = record.getRecordClassName();
+	var strTable = record.getRecordClassName();
 	
-	if (IsClassNameSupported(strRecordClassName) == false)
+	if (IsTableSupported(strTable) == false)
 	{
 		return false;
 	}
 
-	var query = record.addQuery('opened_by','=',strUserSysId);
+	var query = record.addQuery('x_snc_datasilos_global','=','true');
 
-	if (strRecordClassName == 'incident')
+	var strUserColumns = GetValue(GetConfig(),'tables',strTable,'columns','instant_access','sys_user');
+	var aFields = GetArrayValue(strUserColumns);
+	for (var nIndex = 0;nIndex < aFields.length; nIndex++)
 	{
-		query.addOrCondition('x_snc_datasilos_global','=','true');
+		query.addOrCondition(aFields[nIndex],'=',strUserSysId);	
 	}
-	if (strRecordClassName == 'incident')
+	
+	
+	var aUserSupervisorSilos = GetSilosFromUserByTypes(strUserSysId,['supervisor']);
+	for (var nIndex = 0; nIndex < aUserSupervisorSilos.length; nIndex++)
 	{
-		query.addOrCondition('caller_id','=',strUserSysId);
-	}
-	if (strRecordClassName == 'change_request')
-	{
-		query.addOrCondition('requested_by','=',strUserSysId);
-	}
-	if (strRecordClassName == 'sc_request')
-	{
-		query.addOrCondition('requested_for','=',strUserSysId);
-	}
-	if (strRecordClassName == 'sc_req_item')
-	{
-		query.addOrCondition('request.requested_for','=',strUserSysId);
-	}	
-
-	if (strRecordClassName == 'incident')
-	{
-		var aUserSupervisorSilos = GetSilosFromUserByTypes(strUserSysId,['supervisor']);
-		for (var nIndex = 0; nIndex < aUserSupervisorSilos.length; nIndex++)
-		{
-			query.addOrCondition('x_snc_datasilos_supervisor_whitelist','CONTAINS',aUserSupervisorSilos[nIndex]);
-		}
+		query.addOrCondition('x_snc_datasilos_supervisor_whitelist','CONTAINS',aUserSupervisorSilos[nIndex]);
 	}
 		
 	var aUserGroups = GetGroupsFromUser(strUserSysId);
@@ -63,13 +48,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2020-04-27 09:04:40</sys_created_on>
         <sys_id>046080bb1b94d010a89720a8ec4bcb32</sys_id>
-        <sys_mod_count>27</sys_mod_count>
+        <sys_mod_count>38</sys_mod_count>
         <sys_name>PrepareQuery</sys_name>
         <sys_package display_value="DataSilos WORK IN PROGRESS" source="x_snc_datasilos">dafbffebdbb78450ba15a353059619eb</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DataSilos WORK IN PROGRESS">dafbffebdbb78450ba15a353059619eb</sys_scope>
         <sys_update_name>sys_script_include_046080bb1b94d010a89720a8ec4bcb32</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2020-07-31 09:58:37</sys_updated_on>
+        <sys_updated_on>2020-10-02 12:57:03</sys_updated_on>
     </sys_script_include>
 </record_update>

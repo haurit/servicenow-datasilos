@@ -44,47 +44,79 @@
 	<h2>System Requirements</h2>
 	<ul>
 		<li>Madrid or later</li>
-		<li><a href="https://github.com/saschawildgrube/servicenow-devtools/" target="_blank">DevTools 1.2.2</a></li>
+		<li><a href="https://github.com/saschawildgrube/servicenow-devtools/" target="_blank">DevTools 1.3.0</a></li>
 	</ul>
-	
-	<h2>Requirement analysis</h2>
-	<p>Please consider the following aspects when preparing the implementation of DataSilos as its activation may have wide-spread implications on processes, integrations and various stakeholders:</p>
-	<ol>
-		<li>Who is responsible to define the data silos and can provide the mapping to groups? In large organizations this might be a challenging task - especially if there are multiple systems of record from which organization data is retrieved and imported into the ServiceNow instance.</li>
-		<li>Consider all integrations! The technical users used for integrations will also be affected by access restrictions applies by DataSilos.</li>
-		<li>How will external suppliers and vendors be affected? The specific rights and roles of users associated to external suppliers and vendors should be considered.</li>
-		<li>Is Performance Analytics being used in the instance? What specific requirements exist in combination of PA?</li>
-	</ol>
 	
 	<h2>Roles</h2>
 	<p>DataSilos supports the following roles:</p>
 	<ul>
-		<li><b>x_snc_datasilos.admin:</b>&#160;A user that has access to all DataSilo administration and configuration modules. Includes the&#160;<b>x_snc_datasilos.manager</b>&#160;role.</li>
-		<li><b>x_snc_datasilos.manager:</b>&#160;A user that can configure data silos and assign groups to data silos.</li>
-		<li><b>x_snc_datasilos.sentinel:</b>&#160;A user that is NOT impacted by any filtering by DataSilos. This is suitable for users that should have global access (e.g. for reporting) or technical users (for integrations).</li>
-		<li><b>x_snc_datasilos.ghost:</b>&#160;A user that can create and modify records without impacting the white list.</li>
+		<li><b>x_snc_datasilos.admin</b>&#160;A user that has access to all DataSilo administration and configuration modules. Includes the&#160;<b>x_snc_datasilos.manager</b>&#160;role.</li>
+		<li><b>x_snc_datasilos.manager</b>&#160;A user that can configure data silos and assign groups to data silos.</li>
+		<li><b>x_snc_datasilos.sentinel</b>&#160;A user that is NOT impacted by any filtering by DataSilos. This is suitable for users that should have global access (e.g. for reporting) or technical users (for integrations).</li>
+		<li><b>x_snc_datasilos.ghost</b>&#160;A user that can create and modify records without impacting the whitelist.</li>
+	</ul>
+	
+	<h2>Configuration Options</h2>
+	<ul>
+	<g2:evaluate var="jvar_strProperties" jelly="true">
+		var HtmlEncode = x_snc_devtools.HtmlEncode;
+		var grSP = new GlideRecord('sys_properties');
+		grSP.addQuery('sys_scope','=','dafbffebdbb78450ba15a353059619eb');
+		grSP.orderBy('name');
+		grSP.query();
+
+		var strProperties = '';
+		while (grSP.next())
+		{
+			var strDescription = HtmlEncode(grSP.getValue('description'));
+		strProperties = strProperties + '<li><b>'+grSP.getValue('name')+'</b>&#160;'+strDescription+'</li>';
+		}
+		strProperties;	
+	</g2:evaluate>
+	<g2:no_escape>$[jvar_strProperties]</g2:no_escape>
+	</ul>
+	
+	<h2>Column Fields</h2>
+	<p>Each supported table is equipped with a number of new column fields:</p>
+	<ul>
+		<li><b>x_snc_datasilos_group_whitelist</b>&#160;The group whitelist field stores a list of groups which should have access to the record.</li>
+		<li><b>x_snc_datasilos_supervisor_whitelist</b>&#160;The supervisor whitelist field stores a list of data silos. The users in the supervisor groups within the data silos will be able to access the record.</li>
+		<li><b>x_snc_datasilos_global</b>&#160;The global visibility flag controls if this record should be globally visible - i.e. it can be seen by all users without any exception. This flag can be useful to make very important incidents public to everyone.</li>
+		<li><b>x_snc_datasilos_ghost</b>&#160;The ghost flag controls if the record's whitelists should be updated. If set to false, whitelists are populated. If the ghost flag is true, whitelists remain unchanged. This allows custom implementations to control the whitelist population. If this flag is set to true, the record behaves in the same way as if it was changed by a user with the x_snc_datasilos.ghost role.</li>
 	</ul>
 	
 	<h2>Implementation guide</h2>
 	<h3>Analysis</h3>
-	The following aspects and topics should be considered when implementing the DataSilos application:
+	<p>The following aspects and topics should be considered when implementing the DataSilos application:</p>
 	<ol>
 		<li>Who should have which role?</li>
+		<li>Who should be responsible to maintain the silo configuration? Which processes might be affected? What happens if new groups are being created today?</li>
+		<li>Who is responsible to define the data silos and can provide a mapping to groups? In large organizations this might be a challenging task - especially if there are multiple systems of record from which organization data is retrieved and imported into the ServiceNow instance.</li>
 		<li>Are there any before/query business rules that serve comparable purposes? Should they be replaced?</li>
 		<li>Are there any customized ACLs in place?</li>
 		<li>Are there any records in supported tables that do not have an assignment groups - and hence may be invisible to most users?</li>
-		<li>Which integrations exist and how will (or should) they be impactedß</li>
+		<li>Which integrations exist and how will (or should) they be impacted? Keep in mind that technical users used for integrations will also be affected by access restrictions applied by DataSilos.</li>
 		<li>Is Performance Analytics being used? What impact on reporting is expected?</li>
 		<li>What reports are maintained and run and by whom?</li>
 		<li>Does the existing group structure support the later silo configuration? Are groups missing? Are there duplicated?</li>
 		<li>Which users are assigned to multiple groups and will that result in expected and intended bahaviour?</li>
 		<li>Should data silo configuration be automated - maybe as part of existing processes that integration organizational data into the platform?</li>
+		<li>How should external suppliers and vendors be affected? The specific rights and roles of users associated to external suppliers and vendors should be considered.</li>
+	</ol>
+	<h3>Preparing Validation</h3>
+	<p>The following spects should be considered for testing and validation:</p>
+	<ol>
+		<li>DataSilos modifies queries being sent to the database in order to implement the visibility filtering. These modifications come at a performance cost. Depending on how many teams (and silos) a user is a member of and depending on hw many records are in the table, the performance impact might be visible to users. IT IS STRONGLY RECOMMENDED TO PERFORM A REALISTIC LOAD TEST! A simulation of actual user behaviour in an production-like instance with production-like configuration can show if the performance impact is acceptable.</li>
+		<li>It is recommended to identify pages and views that are most frequently used by users - both for automated and manual user acceptance testing.</li> 
+		<li>Functional test cases should proof that specific records are visible to specific user groups AND that other records are explicitly NOT visible to other user groups.</li>
+		<li>Functional test cases should cover scenarios in which records are passed from one silo to another.</li>
+		<li>Any existing test cases (that relate to the supported tables) should be executed as part of the QA. Behaviour that was expected in the past may no longer be working with active filtering. In some cases the silo configuration might have to be reviewed, in other cases, the test cases might have to be updated.</li> 
 	</ol>
 	<h3>Installation</h3>
 	<ol>
 		<li>Install the DataSilos application. If you see this installation guide within the ServiceNow instance, you did this already. You can fork this&#160;<a href="https://github.com/saschawildgrube/servicenow-datasilos" target="_blank">repository</a>&#160;and then import the application from source control.</li>
 		<li>Install the DevTools application. You can fork this&#160;<a href="https://github.com/saschawildgrube/servicenow-devtools" target="_blank">repository</a>&#160;and then import the application from source control.</li>
-		<li>Check the DevTools version. If a different (more recent) version of DevTools was imported from source control you might consider creating a branch based on the corresponding version tag and switch to that branch.</li>
+		<li>Check the DevTools version. If a different (more recent) version of DevTools was imported from source control you must create a branch based on the corresponding version tag and switch to that branch.</li>
 		<li>Follow the installation instruction contained in DevTools/Start.</li>
 		<li>Elevate roles to security_admin</li>
 		<li>Go to "Access Control (ACL)" and check if there are any ACLs in the "DataSilos" application scope that refer to OOTB tables (e.g. incident, incident_task, etc.) with a name like e.g. incient.* (This is "incident DOT asterix"). If you see some, they must be deleted. Do NOT delete any ACLs that refer to any x_snc_datasilos* fields (like e.g. x_snc_datasilos_group_whitelist). A platform bug eventually creates them during installation and associates them to the app scope. Note that they cannot be deleted directly, because the platform denies any change to an ACL that refers to a table in the global scope from within an application scope. Use the following trick: Change the table to "Data Silos" then "Save" and then "Delete" them.</li>
@@ -121,12 +153,14 @@ Query: true
 			</pre>
 			<li>Go to the "Business Rules" module and verify the new business rule is active and in the global scope.</li>
 			<li>Verify you are still in the GLOBAL scope.</li>
-			<li>Ideally only ONE ACL exists for table_name.* (Note it is "table_name DOT asterix") for the READ operation. You may have to create one, change an existing ACL or consolidate multiple ACLs into one. Either way: make sure that all active ACLs contain the following script logic.</li> 
-			<li>Activate 'Advanced' (if not active already) and add the following script:</li>
+			<li>At least two ACLs for the&#160;<b>read</b>&#160;operation must exist for each table:&#160;<b>table_name</b>&#160;and&#160;<b>table_name.*</b>. Ideally only ONE ACL exists for&#160;<b>table_name</b>&#160;and&#160;<b>table_name.*</b>&#160;(Note it is "table_name DOT asterix") for the&#160;<b>read</b>&#160;operation. You may have to create or change existing ACLs or consolidate multiple ACLs into one. Either way: make sure that all active ACLs contain the following script logic.</li> 
+			<li>Activate 'Advanced' (if not active already) and add the following script or combine it with already existing scripts:
 			<pre>
-x_snc_datasilos.ExecuteACL(current)				
+answer = x_snc_datasilos.ExecuteACL(current);	
 			</pre>
-			Note that you may have to combine the script logic with already existing scripts.
+			</li>
+			<li>
+			CAUTION: setting the response variable "answer" sometimes only works ONCE during a script. To avoid any issues it is recommended to set the "answer" value only once at the end of the script.</li>
 		</ol>
 		<li>Install any additional customer specific applications that are based on DataSilos and extend its functionality.</li>
 		<li>If possible activate the DataSilos app in the options and then go to "Test Suite" and execute all tests. Fix any issues reported by the tests. If needed deactivate the DataSilos app after running all tests.</li>
@@ -165,10 +199,49 @@ x_snc_datasilos.ExecuteACL(current)
 	<p>DataSilos adds a new field to all relevant tables that contains a whitelist of groups. A user that is at least member of one of these whitelisted groups may see the record. Business rules in the global scope will alter the query and act on inserts and updates to control visibility and extend the whitelist where appropriate.</p>
 	
 	<h2>Developer guide</h2>
-	<p>When extending the scope of the DataSilos application the following steps should be considered:</p>
+	<h3>Entry points</h3>
+	<p>The DataSilos application is implemented in a number of script includes. Most of which contain a single function. The following script includes (i.e. functions) serve as entry points to the application. All other functions are then called from these entry points:</p>
+	<ol>
+		<li>ExecuteBusinessRule</li>
+		<li>ExecuteACL</li>
+		<li>Maintenance</li>
+	</ol>
+	<p>For a more detailed description refer to the DataSilos API Reference below.</p> 
+	
+	<h3>DataSilos API Reference</h3>
+	<p>
+	<g2:evaluate var="jvar_strScriptIncludes" jelly="true">
+		var HtmlEncode = x_snc_devtools.HtmlEncode;
+		var grSSI = new GlideRecord('sys_script_include');
+		grSSI.addQuery('sys_scope','=','dafbffebdbb78450ba15a353059619eb');
+		grSSI.addQuery('access','=','public');
+		grSSI.orderBy('name');
+		grSSI.query();
+
+		var strScriptIncludes = '';
+		while (grSSI.next())
+		{
+			var strDescription = HtmlEncode(grSSI.getValue('description'));
+			strScriptIncludes = strScriptIncludes + '<p><b>'+grSSI.getValue('name')+'</b>&#160;'+strDescription+'</p>';
+		}
+		strScriptIncludes;	
+	</g2:evaluate>
+	<g2:no_escape>$[jvar_strScriptIncludes]</g2:no_escape>
+	</p>
+	
+	<h3>Extension of scope</h3> 
+	<p>Extending the scope of the DataSilos application essentially means to add the filtering logic to more tables. This may have impact on the applications, views, reports and other components that make use of these tables. So before actually extending the scope of DataSilos consider the following steps:</p>
+	<ol>
+		<li>Verify if there is a more recent version of DataSilos is available that may already cover the new requirements.</li>
+		<li>Get in touch with the author of the DataSilos application and check if there is work in progress on a new version of DataSilos. Maybe development work can be synchronized or knowledge can be shared. It is also possible that some of the analysis work has already been done.</li>
+		<li>Identify the specific data that requires protection.</li>
+		<li>Map out where the data is coming from: manual input from unsers, integrations?</li>
+		<li>Identify the rules to be used to control access.</li>
+	</ol>
+	<p>After a decision has been made to extend scope of the DataSilos application perform the following steps:</p>
 	<ol>
 		<li>Identify the affected tables</li>
-		<li>Add the whitelist field to all affected tables! Please note that you MUST adapt the column name after entering the column label!</li>
+		<li>Add the group whitelist field to all affected tables! Please note that you MUST adapt the column name after entering the column label!</li>
 <pre>
 Type: List
 Column label: DataSilos Group Whitelist
@@ -177,50 +250,95 @@ Attributes: edge_encryption_enabled=true,no_sort=true,slushbucket_ref_no_expand=
 Reference: Group
 Reference cascade rule: None (not "--None--"!)
 </pre>
-		<li>Elevate role to security_admin</li>
-		<li>Add create, write, read and delete Access Controls to the table DataSilos whitelist columns for all affected tables:</li>
+		<li>Elevate role to security_admin and add create, write, read and delete Access Controls to the table DataSilos whitelist columns for all affected tables:</li>
 <pre>
 Name: DataSilos Group Whitelist
 Requires role: x_snc_datasilos.manager 
 </pre>
+		<li>Add the supervisor silo whitelist field to all affected tables! Please note that you MUST adapt the column name after entering the column label!</li>
+<pre>
+Type: List
+Column label: DataSilos Supervisor Whitelist
+Column name: x_snc_datasilos_supervisor_whitelist
+Attributes: edge_encryption_enabled=true,no_sort=true,slushbucket_ref_no_expand=true
+Reference: DataSilo (search for "x_snc_datasilos")
+Reference cascade rule: None (not "--None--"!)
+</pre>
+		<li>Elevate role to security_admin and add create, write, read and delete Access Controls to the new field for all affected tables:</li>
+<pre>
+Name: DataSilos Supervisor Whitelist
+Requires role: x_snc_datasilos.manager 
+</pre>
+		<li>Add the global visibility field to all affected tables! Please note that you MUST adapt the column name after entering the column label!</li>
+<pre>
+Type: True/False
+Column label: DataSilos Global Visibility
+Column name: x_snc_datasilos_global
+</pre>
+		<li>Elevate role to security_admin and add create, write, read and delete Access Controls to the new field for all affected tables:</li>
+<pre>
+Name: DataSilos Global Visibility
+Requires role: x_snc_datasilos.manager 
+</pre>
+		<li>Add the ghost field to all affected tables! Please note that you MUST adapt the column name after entering the column label!</li>
+<pre>
+Type: True/False
+Column label: DataSilos Ghost
+Column name: x_snc_datasilos_ghost
+</pre>
+		<li>Elevate role to security_admin and add create, write, read and delete Access Controls to the new field for all affected tables:</li>
+<pre>
+Name: DataSilos Ghost
+Requires role: x_snc_datasilos.manager 
+</pre>
 		<li>Add new navigation modules to display the new tables</li>
 		<li>Configure the DataSilos view for these new modules</li>
-		<li>Extend the GetAllSupportedMainClassNames script include to support the table of the main records (e.g. incident, change_request, etc.).</li>
-		<li>Extend the GetAllSupportedRelatedClassNames script include to support the tables of related records (e.g. tasks).</li>
-		<li>Extend the GetParentRecord script include to support the identification of parent records of related records (e.g. to get the incident from an incident task)</li>
-		<li>Extend the GetRelatedRecords script include to support the identification of related records of a main record (e.g. to get the incident_tasks from an incident)</li>
-		<li>Extend the GetClassNameWhitelistTriggerFields script include to identify defaults for the new supported tables.</li>
-		<li>Extend the PrepareQuery, RecordInitialize and RecordUpdate scripts to consider specific requirements for the new tables. Keep in mind that any table that is NOT based on the task table may not have the assignment_group field and hence might require a completely different way to populate the whitelist.</li>
-		<li>Extend the filter condition in the "ACLs" module to cover the new tables</li>
+		<li>Extend the GetConfigBaseline script include to support all new tables. Use the existing table configurations as templates.</li>
+		<li>Extend the GetRelatedRecords script include to support the identification of related records of a record (e.g. to get the incident_tasks from an incident)</li>
+		<li>Extend the filter condition in the "ACLs" module to cover the new tables.</li>
+		<li>Extend the filter condition in the "Business Rules" module to cover the new tables.</li>
 		<li>Add the configuration option to set the whitelist_trigger_field property for the new tables.</li>
-		<li>Update ATF test "DataSilos - Installation" to check for business rules related to the new tables</li>
-		<li>Update ATF test "DataSilos - Installation" to check for ACLs related to the new tables</li>
 		<li>Switch to global scope</li>
 		<li>Add corresponding business rules for all affected tables</li>
 		<li>Add or modify corresponding ACLs for all affected tables</li>
 		<li>Switch back to DataSilos scope</li>
 		<li>Create ATF tests. The following tests can be used as templates:</li>
 			<pre>
-DataSilos - incident
+DataSilos - incident - installation
+DataSilos - incident - basic
 DataSilos - incident - opener, caller and sentinel
+DataSilos - incident - global
 DataSilos - incident - cross-silo
 DataSilos - incident_task
 DataSilos - incident_task - cross-silo
 			</pre>
 		<li>Update THIS documentation</li>
+		<li>Test the new feature against all known existing use cases related to the added tables.</li> 
 	</ol>
 	<h2>Release Notes</h2>
-	<h3>1.5.0 - WORK IN PROGRESS</h3>
+	<h3>2.0.0 - WORK IN PROGRESS</h3>
 	<ol>
-		<li>Introduced the supervisor datasilo whitelist field for the incident table.</li>
-		<li>The test incident - cross-silo now impersonates a user of the current assignment group before re-assigning the incident. This change was made to consider strict customer-specific customizations.</li>
+		<li>WARNING: The property x_snc_datasilos.incident.whitelist_trigger_fields has essentially be renamed to x_snc_datasilos.tables.incident.columns.whitelist_trigger.sys_user_group! Make sure to redo the configuration during upgrade!</li>
+		<li>WARNING: The property x_snc_datasilos.active now controls the filter ONLY. It will no longer halt the population of the whitelists. As a result it can now be more effectively used as an ON/OFF switch while preparing a go-live or during trouble shooting - without any negative impact on the whitelists of records that are changed in the meantime.</li>
+		<li>WARNING: It is now required to configure ACLs not only for&#160;<b>table_name.*</b>,&#160;but also for&#160;<b>table_name</b>,&#160;. Updated the "ACLs" module and tests accordingly.</li>
+		<li>DevTools version 1.3.0 or higher is required.</li>
+		<li>Introduced the supervisor datasilo whitelist field to enable silo based whitelists for supervisors.</li>
+		<li>Introduced the global visibility flag for all tables.</li>
+		<li>Introduced the ghost flag for all tables. If set to true whitelists are not updated when a record is changed.</li>
+		<li>Introduced configurable group filter. An encoded query can now be configured to control which groups should be considered for whitelist population.</li>
+		<li>Introduced the option to avoid expensive queries. When the system property x_snc_datasilos.tables.<b>table_name</b>.avoid_expensive_queries is set to true, queries that do not contain a filter for active records are not altered. This results in users seeing a message that some records have been filtered from the result set and eventually empty result pages.</li>
+		<li>The test "DataSilos - incident - cross-silo" now impersonates a user of the current assignment group before re-assigning the incident. This change was made to consider strict customer-specific customizations.</li>
 		<li>A number of script includes have been opened up for use from different scopes to enable implementation of customer specific Maintenance() functions and business rules.</li>
+		<li>Extended the "Business Rules" module to show all before query business rules for the supported tables.</li> 
+		<li>Optimized ExecuteACL() so that it does not evaluate the access restrictions for a single record multiple times.</li>
+		<li>Extended the Developer Guide: The DataSilos API Reference has been added and Scope Extention chapter has been refined.</li> 
+		<li>Moved all contents from the "Requirement Analysis" chapter into the "Implementation Guide", added process relevant considerations.</li>
 	</ol>
 	<h3>1.4.0 - 2020-07-30</h3>
 	<ol>
 		<li>DevTools version must be 1.2.1.</li>
 		<li>Existence and version of DevTools is now checked in ATF "DataSilos - installation".</li>
-		<li>Introduced the Global Visibility flag for the incident table. If set to true, everyone can see this particular record.</li>
+		<li>Introduced the global visibility flag for the incident table. If set to true, everyone can see this particular record.</li>
 		<li>Reactivated the "Log" module.</li>
 		<li>The module "Maintenance" has been replaced by the "Scheduled Jobs" module and shows all scheduled script executions where the name contains "DataSilos".</li>
 		<li>The module "Business rules" now shows all business rules that contain "DataSilos" in their name - this is to consider customer's naming conventions with prefixes.</li>
@@ -281,13 +399,13 @@ DataSilos - incident_task - cross-silo
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2020-04-07 13:52:45</sys_created_on>
         <sys_id>1c4102d5db889c50ba15a353059619a2</sys_id>
-        <sys_mod_count>156</sys_mod_count>
+        <sys_mod_count>209</sys_mod_count>
         <sys_name>Start</sys_name>
         <sys_package display_value="DataSilos WORK IN PROGRESS" source="x_snc_datasilos">dafbffebdbb78450ba15a353059619eb</sys_package>
         <sys_policy/>
         <sys_scope display_value="DataSilos WORK IN PROGRESS">dafbffebdbb78450ba15a353059619eb</sys_scope>
         <sys_update_name>sys_ui_page_1c4102d5db889c50ba15a353059619a2</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2020-08-03 14:07:57</sys_updated_on>
+        <sys_updated_on>2020-10-02 13:16:53</sys_updated_on>
     </sys_ui_page>
 </record_update>
